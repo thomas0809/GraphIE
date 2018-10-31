@@ -102,6 +102,3 @@ ENV/
 
 # mypy
 .mypy_cache/
-
-
-not-release/
