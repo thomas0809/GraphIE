@@ -21,34 +21,6 @@ import itertools as it
 import random
 
 
-SMTPserver = 'outgoing.csail.mit.edu'
-SENDER =     'yujieq@csail.mit.edu'
-USERNAME = "yujieq"
-with open("/afs/csail.mit.edu/u/y/yujieq/private/pw.txt") as f:
-    PASSWORD = f.read().strip()
-
-def send_email(subject, content):
-    msg = MIMEMultipart()
-    msg['From'] = "Yujie Qian <yujieq@csail.mit.edu>"
-    msg['To'] = "Yujie Qian <yujieq@csail.mit.edu>"
-    msg['Subject'] = subject 
-    msg['Date'] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-    body = MIMEText(content)
-    msg.attach(body)
-    conn = SMTP(SMTPserver, port=587)
-    conn.ehlo_or_helo_if_needed()
-    # conn.ehlo()
-    conn.starttls()
-    conn.ehlo_or_helo_if_needed()
-    # conn.ehlo()
-    conn.set_debuglevel(False)
-    try:
-        conn.login(USERNAME, PASSWORD)
-        conn.sendmail(SENDER, SENDER, msg.as_string())
-    except:
-        print("Errors occurred during sending the message")
-        conn.quit()
-
 parser = argparse.ArgumentParser(description='Grid Search Dispatcher')
 parser.add_argument("--num_gpu", nargs="?", type=int, default=3, help="num gpus available to process. Default assume all gpus < num are available.")
 parser.add_argument('--task', type=str, default='education')
@@ -190,4 +162,3 @@ if __name__ == "__main__":
             writer.writerow(row)
 
     print(dump_result_string)
-    send_email("Training Result", dump_result_string)
