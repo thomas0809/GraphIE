@@ -1,40 +1,21 @@
-# GraphIE
+# GraphIE (sentence-level)
 
 ## Requirements
 
-* python
-* PyTorch
-* tqdm, pandas, dateutil
+* python 3.6
+* PyTorch 0.4.1
+* torchtext
+* tqdm, termcolor
 
-## Preprocessing
+## Social Media Information Extraction
 
-* Parse the pdf with PDFMiner
-  ```
-  python parse_pdf.py
-  ```
-  By default, all the pdfs are stored in `Content/`, while each case in a separate folder. Please edit the code if the pdfs
-  are stored elsewhere.
+The datasets (Education, Job) are constructed from the [corpus](https://nlp.stanford.edu/~bdlijiwei/Code.html) used in [Weakly Supervised User Proﬁle Extraction from Twitter (ACL'14)](http://aritter.github.io/acl2014_li.pdf). See the `twitter_data/` folder.
 
-* Generate the graph and annotate the tags
-  ```
-  python gen_graph.py --base Content/ --excel samples_labels.xlsx
-  ```
+To reproduce the experiments, run
+```
+python dispatcher_twitter.py --num_gpu=2 --task education
+```
 
-## Training
-  ```
-  python train.py --base ./ --case selected_case.txt
-  ```
-  Please see the code for the parameter definitions.
+## Visual Information Extraction
 
-## Testing
-  ```
-  python train.py --test  --testmodel xxx.model --testbase ./ --testcase test.txt
-  ```
-  
-## Postprocessing
-  Generate the predictions to a .xlsx file and evaluate.
-  ```
-  python evaluate.py --base ./ --case test.txt --model gnn
-  ```
-  By default, it performs automatic evaluation using the ground truth in `Cons_Full_training.xlsx`.
-  If evaluation is not needed, please edit the code.
+We cannot release the data for patient privacy and proprietary reasons. The codes can be however found in the `scripts-for-visual-ie` folder.
