@@ -16,35 +16,28 @@ import json
 import time
 import argparse
 import random
-import yaml
 
 from decimal import Decimal
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim import Adam, SGD
 from neuronlp2.nn import Optimizer
 from neuronlp2.io import get_logger, LogInfo, conll03_data, CoNLL03Writer, \
     TensorboardLossRecord, LossRecorder, plot_att_change
-from neuronlp2.io.Constants import PAD_ID_WORD
 from neuronlp2.models import BiRecurrentConvCRF, BiRecurrentConvGraphCRF
 from neuronlp2 import utils
-from neuronlp2.tasks import majority_rule
 
 from efficiency.log import show_time, show_var, fwrite
-from efficiency.function import load_yaml
-
-import uuid
 
 
 # evaluate the NER score using official scorer from CONLL-2003 competition
 def evaluate(output_file, score_file, evaluate_raw_format=False, o_tag='O'):
     if evaluate_raw_format:
-        os.system("../ai/conll03eval.v2 -r -o %s < %s > %s" %
+        os.system("./examples/eval/conll03eval.v2 -r -o %s < %s > %s" %
                   (o_tag, output_file, score_file))
     else:
-        os.system("../ai/conll03eval.v2 -o %s < %s > %s" %
+        os.system("./examples/eval/conll03eval.v2 -o %s < %s > %s" %
                   (o_tag, output_file, score_file))
     with open(score_file, 'r') as fin:
         fin.readline()
@@ -85,7 +78,8 @@ def main():
     parser.add_argument('--p_tag', type=float, default=0.33, help='dropout rate for output layer')
     parser.add_argument('--bigram', action='store_true', help='bi-gram parameter for CRF')
 
-    parser.add_argument('--adj_attn', choices=['cossim', 'flex_cossim', 'flex_cossim2', 'concat', '', 'multihead'], default='')
+    parser.add_argument('--adj_attn', choices=['cossim', 'flex_cossim', 'flex_cossim2', 'concat', '', 'multihead'],
+                        default='')
 
     # Data loading and storing params
     parser.add_argument('--embedding_dict', help='path for embedding dict')
@@ -94,13 +88,8 @@ def main():
     parser.add_argument('--dev', type=str, required=True, help='Path of dev set')
     parser.add_argument('--test', type=str, required=True, help='Path of test set')
     parser.add_argument('--results_folder', type=str, default='results', help='The folder to store results')
-    parser.add_argument('--tmp_folder', type=str, default='tmp', help='The folder to store tmp files')
     parser.add_argument('--alphabets_folder', type=str, default='data/alphabets',
                         help='The folder to store alphabets files')
-    parser.add_argument('--result_file_name', type=str, default='hyperparameters_tuning',
-                        help='File name to store some results')
-    parser.add_argument('--result_file_path', type=str, default='results/hyperparameters_tuning',
-                        help='File name to store some results')
 
     # Training parameters
     parser.add_argument('--cuda', action='store_true', help='whether using GPU')
@@ -130,7 +119,8 @@ def main():
     parser.add_argument('--unk_replace', type=float, default=0., help='The rate to replace a singleton word with UNK')
     parser.add_argument('--evaluate_raw_format', action='store_true', help='The tagging format for evaluation')
 
-    parser.add_argument('--smooth', action='store_true', help='whether restore from stored parameters')
+    parser.add_argument('--show_network', action='store_true', help='whether to display the network structure')
+    parser.add_argument('--smooth', action='store_true', help='whether to skip all pdb break points')
 
     parser.add_argument('--uid', type=str, default='temp')
     parser.add_argument('--misc', type=str, default='')
@@ -139,8 +129,16 @@ def main():
     show_var(['args'])
 
     uid = args.uid
+    results_folder = args.results_folder
+    dataset_name = args.dataset_name
     use_tensorboard = True
-    save_tb_path = '../../data/run/tb/bb/'
+
+    save_dset_dir = '{}../dset/{}/graph'.format(results_folder, dataset_name[:4])
+    result_file_path = '{}/{dataset}_{uid}_result'.format(results_folder, dataset=dataset_name[:4], uid=uid)
+
+    save_loss_path = '{}/{dataset}_{uid}_loss'.format(results_folder, dataset=dataset_name[:4], uid=uid)
+    save_lr_path = '{}/{dataset}_{uid}_lr'.format(results_folder, dataset=dataset_name[:4], uid='temp')
+    save_tb_path = '{}/tensorboard/'.format(results_folder)
 
     logger = get_logger("NERCRF")
     loss_recorder = LossRecorder(uid=uid)
@@ -172,18 +170,14 @@ def main():
     bigram = args.bigram
     embedding = args.embedding
     embedding_path = args.embedding_dict
-    dataset_name = args.dataset_name
     evaluate_raw_format = args.evaluate_raw_format
     o_tag = args.o_tag
     restore = args.restore
     save_checkpoint = args.save_checkpoint
     gpu_id = args.gpu_id
-    results_folder = args.results_folder
-    tmp_folder = args.tmp_folder
     alphabets_folder = args.alphabets_folder
     use_elmo = False
     p_em_vec = 0.
-    result_file_path = args.result_file_path
 
     learning_rate_gcn = args.learning_rate_gcn
     gcn_warmup = args.gcn_warmup
@@ -200,21 +194,15 @@ def main():
     graph_model = 'gnn'
     coref_edge_filt = ''
 
-    save_dset_dir = '../../../data/dsets/{}/graph_repe'.format(dataset_name[:4])
-    save_loss_path = '../../data/run/bb/{}_loss_{}'.format(dataset_name[:4], uid)
-    save_lr_path = '../../data/run/bb/lr_{}'.format('temp')
     cheat_densify = False
     train_order = False
     misc = "{}".format(str(args.misc))
 
-    score_file = "%s/score_%s" % (tmp_folder, uid)
+    score_file = "{}/{dataset}_{uid}_score".format(results_folder, dataset=dataset_name[:4], uid=uid)
 
-    if not os.path.exists(results_folder):
-        os.makedirs(results_folder)
-    if not os.path.exists(tmp_folder):
-        os.makedirs(tmp_folder)
-    if not os.path.exists(alphabets_folder):
-        os.makedirs(alphabets_folder)
+    for folder in [results_folder, alphabets_folder, save_dset_dir]:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
     def set_seed(seed):
         if not seed:
@@ -360,7 +348,7 @@ def main():
         else:
             sample = data_dev.pad_batch(data_dev.dataset[:1])
         plot_att_change(sample, network, record, save_tb_path + 'att/', uid='temp', epoch=0, device=device,
-                        word_alphabet=word_alphabet, show_net=True,
+                        word_alphabet=word_alphabet, show_net=args.show_network,
                         graph_types=data_train.meta_info['graph_types'])
         # import pdb; pdb.set_trace()
 
@@ -408,7 +396,7 @@ def main():
         lr_state = 'Epoch %d (uid=%s, lr=%.2E, lr_gcn=%.2E, decay rate=%.4f): ' % (
             epoch, uid, Decimal(optim.curr_lr), Decimal(optim.curr_lr_gcn), decay_rate)
         print(lr_state)
-        fwrite(lr_state + '\n', save_lr_path, mode='a')
+        fwrite(lr_state[:-2] + '\n', save_lr_path, mode='a')
 
         train_err = 0.
         train_err2 = 0.
@@ -431,7 +419,7 @@ def main():
             adjs_into_model = adjs if adj_memory else adjs.clone()
 
             loss, (ner_loss, adj_loss) = network.loss(None, word, char, adjs_into_model, labels,
-                                graph_types=graph_types, lambda1=lambda1, lambda2=lambda2)
+                                                      graph_types=graph_types, lambda1=lambda1, lambda2=lambda2)
 
             # loss = network.loss(_, sent_word, sent_char, sent_labels, mask=sent_mask)
             loss.backward()
@@ -462,12 +450,14 @@ def main():
         sys.stdout.write("\b" * num_back)
         sys.stdout.write(" " * num_back)
         sys.stdout.write("\b" * num_back)
-        print('train: %d loss: %.4f, loss2: %.4f, time: %.2fs' % (num_batches, train_err / train_total, train_err2 / train_total, time.time() - start_time))
+        print('train: %d loss: %.4f, loss2: %.4f, time: %.2fs' % (
+            num_batches, train_err / train_total, train_err2 / train_total, time.time() - start_time))
 
         # evaluate performance on dev data
         with torch.no_grad():
             network.eval()
-            tmp_filename = '%s/%s_dev' % (tmp_folder, uid)
+            tmp_filename = "{}/{dataset}_{uid}_output_dev".format(results_folder, dataset=dataset_name[:4], uid=uid)
+
             writer.start(tmp_filename)
 
             for batch in data_dev:
@@ -502,7 +492,8 @@ def main():
                 best_epoch = epoch
 
                 # evaluate on test data when better performance detected
-                tmp_filename = '%s/%s_test' % (tmp_folder, uid)
+                tmp_filename = "{}/{dataset}_{uid}_output_test".format(results_folder, dataset=dataset_name[:4],
+                                                                       uid=uid)
                 writer.start(tmp_filename)
 
                 for batch in data_test:

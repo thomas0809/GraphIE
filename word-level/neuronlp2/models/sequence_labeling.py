@@ -501,7 +501,7 @@ class BiRecurrentConvGraphCRF(BiRecurrentConvCRF):
         input_word, input_char, target, sent_mask, length, doc_n_sent = self._doc2sent(
             input_word, input_char, target, show_net=show_net)
 
-        # [n_sent, sent_len, enc_dim]
+        # input: [n_sent, sent_len, enc_dim]
         input, length = self._get_word_enc(
             input_word_orig, input_word, input_char, mask=sent_mask, length=length, show_net=show_net)
 
