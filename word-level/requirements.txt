@@ -1,0 +1,4 @@
+git+git://github.com/zhijing-jin/efficiency.git
+tensorboardX==1.4.0
+scipy
+nltk
