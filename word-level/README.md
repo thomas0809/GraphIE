@@ -1,6 +1,6 @@
 # GraphIE: This is the code for word-level GCN
 
-This code is implemented by [Zhijing Jin](http://zhijing-jin.com/fantasy/about/). For any questions, please contact via [email](mailto:zhijing.jin@connect.hku.hk).
+This code is implemented by [Zhijing Jin](http://zhijing-jin.com/fantasy/about/). For any questions, please contact her [email](mailto:zhijing.jin@connect.hku.hk).
 
 The original framework is accreditted to [Di Jin](https://github.com/jind11).
 
