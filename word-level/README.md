@@ -7,5 +7,5 @@ The original framework is accreditted to Di Jin.
 
 ## Run
 ```
-python examples/multi_run_conll.py
+python examples/multi_runs_conll.py --gpu_id 0
 ```
