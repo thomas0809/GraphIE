@@ -18,12 +18,13 @@ pip install -r requirements.txt
 ```
 
 ### 2) Download data
-- Small [data samples](data/dset/03co) are provided.
-- For the full preprocessed data, you can contact the author by [email](mailto:zhijing.jin@connect.hku.hk).
-- Preprocessing code will be released soon.
 ```bash
 ./download_data.sh # download Glove embeddings
 ```
+Note: If you need to preprocess new data sources, please see
+- Small [data samples](data/dset/sample_format) are provided.
+- If have any questions regarding `preprocess.py`, you can contact the author by [email](mailto:zhijing.jin@connect.hku.hk).
+
 ## Run
 ```
 python examples/multi_runs_conll.py --gpu_id 0
