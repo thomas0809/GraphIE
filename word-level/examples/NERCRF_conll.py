@@ -343,7 +343,7 @@ def main():
 
     network = network.to(device)
     if True:
-        if dataset_name == '03conll':
+        if dataset_name == '03conll' and data_dev.data_len > 26:
             sample = data_dev.pad_batch(data_dev.dataset[25:26])
         else:
             sample = data_dev.pad_batch(data_dev.dataset[:1])
