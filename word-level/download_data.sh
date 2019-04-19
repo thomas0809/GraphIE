@@ -1,6 +1,7 @@
 
 # Download conll03 dataset
-cd /data/dset/03co
+mkdir -p data/dset/03co 2> /dev/null
+cd data/dset/03co
 curl -O https://raw.githubusercontent.com/Franck-Dernoncourt/NeuroNER/master/neuroner/data/conll2003/en/train.txt
 curl -O https://raw.githubusercontent.com/Franck-Dernoncourt/NeuroNER/master/neuroner/data/conll2003/en/valid.txt
 curl -O https://raw.githubusercontent.com/Franck-Dernoncourt/NeuroNER/master/neuroner/data/conll2003/en/test.txt
