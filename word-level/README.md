@@ -18,8 +18,11 @@ pip install -r requirements.txt
 ```
 
 ### 2) Download data
+- Small [data samples](data/dset/03co) are provided.
+- For the full preprocessed data, you can contact the author by [email](mailto:zhijing.jin@connect.hku.hk).
+- Preprocessing code will be released soon.
 ```bash
-./download_data.sh
+./download_data.sh # download Glove embeddings
 ```
 ## Run
 ```
