@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ### 2) Download data
 ```bash
-./download_data.sh # download Glove embeddings
+./download_data.sh # (1) download and preprocess Conll2003; (2) download Glove embeddings
 ```
 Note: If you need to preprocess new data sources, please see
 - Small [data samples](data/dset/sample_format) are provided.
