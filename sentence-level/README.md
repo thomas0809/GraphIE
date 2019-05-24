@@ -19,7 +19,11 @@ python dispatcher_twitter.py --num_gpu=2 --task education
 ## Visual Information Extraction
 
 We cannot release the data for patient privacy and proprietary reasons. The codes can be however found in the `scripts-for-visual-ie` folder. 
+
 `parse_pdf.py` is for parsing PDFs using [pdfminer](https://github.com/euske/pdfminer). 
+
 `gen_graph_bio.py` constructs the graph and converts the answers to tags. 
+
 `gen_vocab.py` generates the vocabulary. 
+
 `train.py` is the core code for training and testing. (Note that `gnn.py`, `ModelUtils.py`, `attention.py` are also required.)
