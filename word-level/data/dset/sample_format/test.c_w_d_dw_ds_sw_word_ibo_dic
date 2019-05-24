@@ -1,0 +1,16 @@
+char_i	word_i	doc_i	d_w_i	d_sent_i	s_word_i	word	tag	dic_tag
+0	0	0	0	0	0	-DOCSTART-	O	<blank>
+11	1	0	1	0	1	</s>	O	<blank>
+16	2	0	2	1	0	SOCCER	O	<blank>
+23	3	0	3	1	1	-	O	<blank>
+25	4	0	4	1	2	JAPAN	B-LOC	<blank>
+31	5	0	5	1	3	GET	O	<blank>
+35	6	0	6	1	4	LUCKY	O	<blank>
+41	7	0	7	1	5	WIN	O	<blank>
+45	8	0	8	1	6	,	O	<blank>
+47	9	0	9	1	7	CHINA	B-PER	<blank>
+53	10	0	10	1	8	IN	O	<blank>
+56	11	0	11	1	9	SURPRISE	O	<blank>
+65	12	0	12	1	10	DEFEAT	O	<blank>
+72	13	0	13	1	11	.	O	<blank>
+74	14	0	14	1	12	</s>	O	<blank>
