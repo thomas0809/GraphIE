@@ -28,10 +28,11 @@ record = {row.loc['Case Number']: row for idx, row in excel.iterrows()}
 
 
 def tokenize(s):
-	tmp = moses.tokenize(s, agressive_dash_splits=True)
-	return [w if w != u'\\@-\\@' else '-' for w in tmp]
+    tmp = moses.tokenize(s, agressive_dash_splits=True)
+    return [w if w != u'\\@-\\@' else '-' for w in tmp]
 
 def date_match(src, annotations):
+    '''Return spans matching a date'''
     res = []
     for tgt in annotations:
         if not isdate(tgt):
@@ -49,22 +50,16 @@ def date_match(src, annotations):
                     l = r
                     break
             l += 1
-        # for idx, word in enumerate(src):
-        #     if samedate(word, tgt):
-        #         res.append([idx, idx+1])
     return res
 
 def exact_match(src, annotations, attr):
-    # debug=False
-    # if ' '.join(src) =='KH':
-    #     debug=True
-    #     print(src, annotations)
+    '''Return spans matching a sequence of words'''
     def preprocess(origin_seq):
-    	seq, idx = [], []
-    	for i, w in enumerate(origin_seq):
-    		if w not in string.punctuation:
-	    		seq.append(w)
-	    		idx.append(i)
+        seq, idx = [], []
+        for i, w in enumerate(origin_seq):
+            if w not in string.punctuation:
+                seq.append(w)
+                idx.append(i)
         if attr != "Patient Initials":
             seq = [w.lower() for w in seq]
         else:
@@ -75,15 +70,15 @@ def exact_match(src, annotations, attr):
         (src_seq, src_idx), (tgt_seq, _) = preprocess(src), preprocess(tokenize(tgt))
         src_len, tgt_len = len(src_seq), len(tgt_seq)
         if tgt_len == 0:
-        	continue
+            continue
         for i in range(src_len - tgt_len + 1):
             if src_seq[i:i+tgt_len] == tgt_seq:
-            	# print(src_idx, i, i+tgt_len-1)
                 res.append([src_idx[i], src_idx[i+tgt_len-1]+1])
     return res
 
 
 def gen_graph(case_path):
+    """Generate graph from parsed pdf"""
     try:
         f = open(case_path + 'parsed.json', 'r')
         parsed = json.load(f)
@@ -104,18 +99,20 @@ def gen_graph(case_path):
             page = doc['pages'][page_id]
             width, height = page['size']
             N = len(page['text'])
-            graph = {'id':{'case':parsed['id'], 'doc':doc_id, 'page':page_id}, 
-                'sent':[], 'pos':[], 'tag':[], 'edge':{'v':[],'h':[]}}
+            graph = {
+                'id':{'case':parsed['id'], 'doc':doc_id, 'page':page_id},
+                'sent':[], 'pos':[], 'tag':[], 'edge':{'v':[],'h':[]}
+            }
             for word in page['text']:
                 graph['sent'].append(tokenize(word[1]))
                 x1, y1, x2, y2 = word[0]
                 x1, x2 = x1/width, x2/width
                 y1, y2 = 1-y2/height, 1-y1/height
                 graph['pos'].append([x1, y1, x2, y2])
-            
             for sent in graph['sent']:
                 tag = [0 for w in sent]
                 graph['tag'].append(tag)
+            # convert annotations in the database to tags
             for attr, match_type in attrs.items():
                 annotations = process_annotation(attr, record_row.loc[attr])
                 if len(annotations) == 0:
@@ -176,17 +173,22 @@ def gen_graph(case_path):
                     d = check_horizontal_edge(graph['pos'][u], graph['pos'][_v])
                     if d is not None and d < min_d:
                         min_d, v = d, _v
+                # merge a line
                 if v is not None:
                     graph['edge']['h'].append([u,v])
                     fu, fv = get_father(u), get_father(v)
                     lines[fu] = lines[fu] + lines[fv]
                     lines[fv] = []
                     father[fv] = fu
-            text_obj = {'id':{'case':parsed['id'], 'doc':doc_id, 'page':page_id}, 
-                'sent':[], 'pos':[], 'tag':[], 'edge':{'v':[],'h':[]}}
+
+            # for baseline sequential tagger
+            text_obj = {
+                'id':{'case':parsed['id'], 'doc':doc_id, 'page':page_id},
+                'sent':[], 'pos':[], 'tag':[], 'edge':{'v':[],'h':[]}
+            }
             for line in lines:
                 if len(line) > 0:
-                    sent = [] 
+                    sent = []
                     for u in line:
                         sent += graph['sent'][u]
                     tag = []

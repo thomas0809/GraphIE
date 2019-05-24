@@ -20,7 +20,7 @@ for line in tqdm(case):
 
 sorted_vocab = sorted(vocab.items(), key=operator.itemgetter(1), reverse=True)
 json.dump(sorted_vocab, open('visual_vocab.json','w'))
-    
+
 print(len(sorted_vocab))
 output = open('vocab.txt', 'w')
 for t in sorted_vocab:

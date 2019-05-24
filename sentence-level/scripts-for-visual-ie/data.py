@@ -62,7 +62,7 @@ class DataPoint():
         pos = np.array(positions)[:self.num_sent]
         # length = np.array([len(sent) for sent in sents])
         mask = np.zeros((self.num_sent, self.max_sent_len), dtype=int)
-        
+
         # word_id = {}
         for i in range(self.num_sent):
             for j in range(len(sents[i])):
@@ -200,7 +200,7 @@ class DataSet():
         self.data = []
         self.char_vocab_size = CHAR_VOCAB_SIZE
         self.case2path = {}
-        
+
         train_filename, valid_filename, test_filename = case_list.split(',')
         train_lines = open(base+train_filename).readlines()
         train_path_list = [base+path.strip() for path in train_lines]
@@ -243,7 +243,7 @@ class DataSet():
 
         for x in self.data:
             self.case2path[x.case_id] = x.path
-        
+
         # self.train = self.data
         # self.valid = []
         # self.test = []
@@ -287,7 +287,6 @@ class DataSet():
         output_case(open('train_case.txt', 'w'), train_set)
         output_case(open('valid_case.txt', 'w'), valid_set)
         output_case(open('test_case.txt', 'w'), test_set)
-        
 
 
 
@@ -323,12 +322,12 @@ class DataLoader():
             max_sent_len = max([x.max_sent_len for x in batch])
             max_word_len = max([x.max_word_len for x in batch])
             data = torch.stack([
-                torch.ByteTensor(np.pad(x.data, 
-                    pad_width=[(0,max_docu_len-x.num_sent),(0,max_sent_len-x.max_sent_len),(0,max_word_len-x.max_word_len)], 
+                torch.ByteTensor(np.pad(x.data,
+                    pad_width=[(0,max_docu_len-x.num_sent),(0,max_sent_len-x.max_sent_len),(0,max_word_len-x.max_word_len)],
                     mode='constant', constant_values=0))
                 for x in batch])
             data_word = torch.stack([
-                torch.LongTensor(np.pad(x.data_word, 
+                torch.LongTensor(np.pad(x.data_word,
                     pad_width=[(0,max_docu_len-x.num_sent),(0,max_sent_len-x.max_sent_len)], mode='constant', constant_values=0))
                 for x in batch])
             pos = torch.stack([

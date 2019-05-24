@@ -24,8 +24,8 @@ def parse_text(layout):
     return result
 
 
-
 def parse_case(case_path):
+    """Parse all the pdf files in the folder."""
     try:
         result = {
             'id': case_path.split('/')[-2], 
@@ -43,7 +43,6 @@ def parse_case(case_path):
             fp = open(path, 'rb')
             parser = PDFParser(fp)
             doc = PDFDocument(parser)
-            
             rsrcmgr = PDFResourceManager()
             laparams = LAParams(detect_vertical=True, all_texts=True)
             device = PDFPageAggregator(rsrcmgr, laparams=laparams)
@@ -74,10 +73,9 @@ def main(base_path):
         if not os.path.isdir(path):
             continue
         case_list.append(path)
+    # Multiprocessing, for speed up
     pool = Pool(processes=8)
-    # parse_case("Content/2017-107446/")
     output = pool.map(parse_case, case_list)
-    # output = [parse_case(path) for path in case_list]
 
 
 if __name__ == '__main__':

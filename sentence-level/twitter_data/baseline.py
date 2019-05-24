@@ -1,6 +1,8 @@
 import json
+import numpy as np
 
-task = 'education'
+# task = 'education'
+task = 'job'
 
 f = open('%s_user.json'%task)
 users = {}
@@ -17,6 +19,10 @@ n = len(users)
 
 f = open('%s_split.json'%task)
 split_list = json.load(f)
+
+prec_list = []
+recall_list = []
+f1_list = []
 
 for _id, obj in enumerate(split_list):
     train = [users[_] for _ in obj['train']]
@@ -37,6 +43,7 @@ for _id, obj in enumerate(split_list):
         recall = hit / true_cnt
         f1 = 2*prec*recall / (prec+recall)
         print(prec, recall, f1)
+        return prec, recall, f1
 
     hit, true_cnt, pred_cnt = 0,0,0
     error_cnt = 0
@@ -64,6 +71,12 @@ for _id, obj in enumerate(split_list):
         hit += _hit
         pred_cnt += _pred
         true_cnt += _true
-    print(hit, pred_cnt, true_cnt)
-    eval(hit, pred_cnt, true_cnt)
+    # print(hit, pred_cnt, true_cnt)
+    p,r,f = eval(hit, pred_cnt, true_cnt)
+    prec_list.append(p)
+    recall_list.append(r)
+    f1_list.append(f)
     # print(error_cnt)
+
+print(np.mean(prec_list), np.mean(recall_list), np.mean(f1_list))
+
