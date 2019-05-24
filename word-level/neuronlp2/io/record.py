@@ -11,24 +11,27 @@ import json
 
 
 class LossRecorder(object):
-    def __init__(self, uid='temp'):
+    def __init__(self, uid='temp', detailed_loss=False):
         self.__source_file = None
         self.uid = uid
+        self.detailed_loss = detailed_loss
 
     def start(self, file_path, mode='w', misc=''):
         self.__source_file = file_path
-        self.__source_file2 = file_path + '.2'
         fwrite("# {}\n".format(misc), file_path, mode)
-        fwrite("# {}\n".format(misc), self.__source_file2, mode)
+        if self.detailed_loss:
+            self.__source_file2 = file_path + '.2'
+            fwrite("# {}\n".format(misc), self.__source_file2, mode)
 
     def write(self, epoch, loss1, loss2, lr, lr2, dev_f1, best_test_f1, test_f1):
-        text = "{:03d} {:.4f} {:.2f} {:.2f} {:.2f}\n"\
+        text = "{:03d} {:.4f} {:.2f} {:.2f} {:.2f}\n" \
             .format(epoch, loss1, dev_f1, best_test_f1, test_f1)
         fwrite(text, self.__source_file, mode='a')
 
-        text = "ep:{:03d} loss1:{:.4f} loss2:{:.4f} lr:{:.2E}, lr2:{:.2E} dev_f1:{:.2f} b_test_f1:{:.2f} test_f1:{:.2f}\n"\
-            .format(epoch, loss1, loss2, lr, lr2, dev_f1, best_test_f1, test_f1)
-        fwrite(text, self.__source_file2, mode='a')
+        if self.detailed_loss:
+            text = "ep:{:03d} loss1:{:.4f} loss2:{:.4f} lr:{:.2E}, lr2:{:.2E} dev_f1:{:.2f} b_test_f1:{:.2f} test_f1:{:.2f}\n"\
+                .format(epoch, loss1, loss2, lr, lr2, dev_f1, best_test_f1, test_f1)
+            fwrite(text, self.__source_file2, mode='a')
 
     def get_loss_list(self, file_path):
         list_loss = []
@@ -124,7 +127,7 @@ class TensorboardLossRecord(object):
                 xticks = [xticks[i] for i in part]
                 yticks = [yticks[i] for i in part]
                 img = heatmap2np(matrix=att_arr, xticks=xticks, yticks=yticks, xlabel='', ylabel='',
-                                 title=caption[:40], image_name=image_name, decimals=8, # annt_clr='b',
+                                 title=caption[:40], image_name=image_name, decimals=8,  # annt_clr='b',
                                  on_server=True)  # (480, 640, 4)
 
             try:
