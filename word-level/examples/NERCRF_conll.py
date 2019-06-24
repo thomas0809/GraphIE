@@ -70,8 +70,8 @@ def main():
     parser.add_argument('--char_dim', type=int, default=30, help='Dimension of Character embeddings')
     parser.add_argument('--tag_space', type=int, default=0, help='Dimension of tag space')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of layers of RNN')
-    parser.add_argument('--dropout', choices=['std', 'weight_drop', 'gcn'], help='Dropout method',
-                        default='weight_drop')
+    parser.add_argument('--dropout', choices=['std', 'gcn'], help='Dropout method',
+                        default='gcn')
     parser.add_argument('--p_em', type=float, default=0.33, help='dropout rate for input embeddings')
     parser.add_argument('--p_in', type=float, default=0.33, help='dropout rate for input of RNN model')
     parser.add_argument('--p_rnn', nargs=3, type=float, required=True, help='dropout rate for RNN')
@@ -174,10 +174,11 @@ def main():
     o_tag = args.o_tag
     restore = args.restore
     save_checkpoint = args.save_checkpoint
-    gpu_id = args.gpu_id
     alphabets_folder = args.alphabets_folder
     use_elmo = False
     p_em_vec = 0.
+    graph_model = 'gnn'
+    coref_edge_filt = ''
 
     learning_rate_gcn = args.learning_rate_gcn
     gcn_warmup = args.gcn_warmup
@@ -191,11 +192,6 @@ def main():
         import pdb
         pdb.set_trace = lambda: None
 
-    graph_model = 'gnn'
-    coref_edge_filt = ''
-
-    cheat_densify = False
-    train_order = False
     misc = "{}".format(str(args.misc))
 
     score_file = "{}/{dataset}_{uid}_score".format(results_folder, dataset=dataset_name[:4], uid=uid)
@@ -233,11 +229,11 @@ def main():
 
     data_train = conll03_data.read_data(train_path, word_alphabet, char_alphabet,
                                         ner_alphabet,
-                                        graph_model, batch_size, ori_order=train_order,
+                                        graph_model, batch_size, ori_order=False,
                                         total_batch="{}x".format(num_epochs + 1),
                                         unk_replace=unk_replace, device=device,
-                                        save_path=save_dset_dir + '/train', coref_edge_filt=coref_edge_filt,
-                                        cheat_densify=cheat_densify)
+                                        save_path=save_dset_dir + '/train', coref_edge_filt=coref_edge_filt
+                                        )
     # , shuffle=True,
     num_data = data_train.data_len
     num_labels = ner_alphabet.size()
@@ -247,13 +243,13 @@ def main():
                                       ner_alphabet,
                                       graph_model, batch_size, ori_order=True, unk_replace=unk_replace, device=device,
                                       save_path=save_dset_dir + '/dev',
-                                      coref_edge_filt=coref_edge_filt, cheat_densify=cheat_densify)
+                                      coref_edge_filt=coref_edge_filt)
 
     data_test = conll03_data.read_data(test_path, word_alphabet, char_alphabet,
                                        ner_alphabet,
                                        graph_model, batch_size, ori_order=True, unk_replace=unk_replace, device=device,
                                        save_path=save_dset_dir + '/test',
-                                       coref_edge_filt=coref_edge_filt, cheat_densify=cheat_densify)
+                                       coref_edge_filt=coref_edge_filt)
 
     writer = CoNLL03Writer(word_alphabet, char_alphabet, ner_alphabet)
 
@@ -321,19 +317,6 @@ def main():
                                      tag_space=tag_space, embedd_word=word_table, use_elmo=use_elmo, p_em_vec=p_em_vec,
                                      p_em=p_em, p_in=p_in, p_tag=p_tag, p_rnn=p_rnn, bigram=bigram,
                                      initializer=initializer)
-    elif dropout == 'var':
-        network = BiVarRecurrentConvCRF(embedd_dim, word_alphabet.size(), char_dim, char_alphabet.size(),
-                                        char_hidden_size, window, mode, encoder_mode, hidden_size, num_layers,
-                                        num_labels,
-                                        tag_space=tag_space, embedd_word=word_table, use_elmo=use_elmo,
-                                        p_em_vec=p_em_vec, p_em=p_em, p_in=p_in, p_out=p_out, p_rnn=p_rnn,
-                                        bigram=bigram, initializer=initializer)
-    else:
-        network = BiWeightDropRecurrentConvCRF(embedd_dim, word_alphabet.size(), char_dim, char_alphabet.size(),
-                                               char_hidden_size, window, mode, encoder_mode, hidden_size, num_layers,
-                                               num_labels,
-                                               tag_space=tag_space, embedd_word=word_table, p_em=p_em, p_in=p_in,
-                                               p_out=p_out, p_rnn=p_rnn, bigram=bigram, initializer=initializer)
 
     # whether restore from trained model
     if restore:
@@ -342,15 +325,14 @@ def main():
     logger.info("cuda()ing network...")
 
     network = network.to(device)
-    if True:
-        if dataset_name == '03conll' and data_dev.data_len > 26:
-            sample = data_dev.pad_batch(data_dev.dataset[25:26])
-        else:
-            sample = data_dev.pad_batch(data_dev.dataset[:1])
-        plot_att_change(sample, network, record, save_tb_path + 'att/', uid='temp', epoch=0, device=device,
-                        word_alphabet=word_alphabet, show_net=args.show_network,
-                        graph_types=data_train.meta_info['graph_types'])
-        # import pdb; pdb.set_trace()
+
+    if dataset_name == '03conll' and data_dev.data_len > 26:
+        sample = data_dev.pad_batch(data_dev.dataset[25:26])
+    else:
+        sample = data_dev.pad_batch(data_dev.dataset[:1])
+    plot_att_change(sample, network, record, save_tb_path + 'att/', uid='temp', epoch=0, device=device,
+                    word_alphabet=word_alphabet, show_net=args.show_network,
+                    graph_types=data_train.meta_info['graph_types'])
 
     logger.info("finished cuda()ing network...")
 
